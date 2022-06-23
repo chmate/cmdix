@@ -1,0 +1,77 @@
+*.pyc
+*.out
+*.xcf
+*.egg
+.eggs/
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+
+# temporary files from vim and emacs
+*~
+*#
+.#*
+*.swp
+*.swo
+
+# Virtualenv
+pip-selfcheck.json
+bin/
+/lib/
+include/
+venv/
+.venv*/
+
+
+# Mac
+.DS_Store
+
+# Editor project files
+*.komodo*
+.cache
+.idea
+
+.coverage
+coverage.xml
+feedstock/
+*.cred
+tttt
+Actually_test.tst
+Actually.tst
+Complete_test.tst
+Complete.tst
+tags
+
+# Rever
+rever/
+# Allow the lib
+!/xonsh/lib
+
+
+# Allow tests/bin
+!/tests/bin
+
+# elm
+xonsh/webconfig/elm-stuff/
+xonsh/webconfig/js/app.js
+
+# VS Code
+.vscode/
+
+# AppImage
+*.AppImage
+
+# mypy
+.dmypy.json
+.mypy_cache
+
+# testmon pytest-plugin
+.testmondata
+
+# pdm
+.pdm.toml
+__pypackages__
+
+# one can use pip or pdm during development
+pdm.lock
