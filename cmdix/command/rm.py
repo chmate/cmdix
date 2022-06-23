@@ -1,5 +1,6 @@
 import os
 import os.path
+import shutil
 
 
 def parseargs(p):
@@ -49,18 +50,9 @@ def func(args):
 def do_it(_raise, arg, args):
     if args.recursive and os.path.isdir(arg):
         # Remove directory recursively
-        for root, dirs, files in os.walk(arg, topdown=False, onerror=_raise):
-            for name in files:
-                path = os.path.join(root, name)
-                os.remove(path)
-                if args.verbose:
-                    print("Removed file '{0}'\n".format(path))
-            for name in dirs:
-                path = os.path.join(root, name)
-                os.rmdir(path)
-                if args.verbose:
-                    print("Removed directory '{0}'\n".format(path))
-        os.rmdir(arg)
+        shutil.rmtree(arg, ignore_errors=args.force)
+        if args.verbose:
+            print("Removed '{0}'\n".format(arg))
     else:
         # Remove single file
         try:

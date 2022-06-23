@@ -27,8 +27,9 @@ def parseargs(p):
 
 
 def func(args):
+    dest = args.DEST[0]
     for src in args.SOURCE:
         if args.verbose:
-            print("'{0}' -> '{1}'".format(src, args.DEST))
+            print("'{0}' -> '{1}'".format(src, dest))
 
-        shutil.move(src, args.DEST)
+        shutil.move(src, dest)

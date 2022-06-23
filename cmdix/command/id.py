@@ -1,6 +1,7 @@
 import os
+import platform
+import getpass
 
-from .. import onlyunix
 from .. import exception
 
 try:
@@ -10,8 +11,7 @@ except ImportError:
     pass
 
 
-@onlyunix
-def parseargs(p):
+def unix_parseargs(p):
     """
     Add arguments and `func` to `p`.
 
@@ -19,7 +19,7 @@ def parseargs(p):
     :return:  ArgumentParser
     """
     # TODO: List all groups a user belongs to
-    p.set_defaults(func=func)
+    p.set_defaults(func=unix_func)
     p.description = (
         "Print user and group information for the specified "
         + "USERNAME, or (when USERNAME omitted) for the current "
@@ -57,7 +57,7 @@ def parseargs(p):
     return p
 
 
-def func(args):
+def unix_func(args):
     if args.username:
         u = pwd.getpwnam(args.username)
     else:
@@ -82,8 +82,23 @@ def func(args):
         return uid
 
     if args.name:
-        exception.StdErrException(
+        raise exception.StdErrException(
             "id: cannot print only names " + "or real IDs in default format"
         )
 
     print("uid={0}({1}) gid={2}({3})".format(uid, username, gid, username))
+
+
+def win_parseargs(p):
+    p.set_defaults(func=win_func)
+    return p
+
+
+def win_func(args):
+    print("user={0}".format(getpass.getuser()))
+
+
+if platform.system() == 'Windows':
+    parseargs = win_parseargs
+else:
+    parseargs = unix_parseargs

@@ -1,60 +1,43 @@
-import shutil
-import sys
-from urllib.request import build_opener
-from urllib.error import HTTPError
+#!/usr/bin/env python3
 
-import cmdix
-from .. import exception
+import os.path
+from urllib.request import Request, urlopen
+from urllib.parse import urlsplit
 
 
 def parseargs(p):
-    """
-    Add arguments and `func` to `p`.
-
-    :param p: ArgumentParser
-    :return:  ArgumentParser
-    """
-    # TODO: Fix for Python3, recursion, proxy, progress bar, you name it...
     p.set_defaults(func=func)
     p.description = "Download of files from the Internet"
     p.add_argument("url", nargs="+", help="write documents to FILE.")
-    p.add_argument(
-        "-O",
-        "--output-document",
-        dest="outputdocument",
-        help="write documents to FILE.",
-    )
-    p.add_argument(
-        "-u",
-        "--user-agent",
-        dest="useragent",
-        help="identify as AGENT instead of default.",
-    )
+    p.add_argument("-O", "--output-document", help="write documents to FILE.")
     return p
 
 
 def func(args):
-    if args.outputdocument:
-        fdout = open(args.outputdocument, 'w')
-    else:
-        fdout = sys.stdout
-
-    if args.useragent:
-        useragent = args.useragent
-    else:
-        useragent = 'Cmdix/' + cmdix.__version__
-
-    opener = build_opener()
-    opener.addheaders = [('User-agent', useragent)]
+    if args.output_document:
+        with open(args.output_document, 'wb') as fout:
+            fout.write(b'')
 
     for url in args.url:
-        try:
-            fdin = opener.open(url)
-        except HTTPError as e:
-            exception.StdErrException("HTTP error opening {0}: {1}".format(url, e))
+        if args.output_document:
+            dst = args.output_document
+            mode = 'ab'
+        else:
+            surl = urlsplit(url)
+            dst = os.path.basename(surl.path)
+            mode = 'wb'
 
-        length = int(fdin.headers['content-length'])
-        print("Getting {0} bytes from {1}...".format(length, url))
+        req = Request(url)
+        with urlopen(req) as fin:
+            length = fin.headers.get('content-length', None)
+            print("Getting {} bytes from {} ...".format(length, url))
+            print("Save to {}".format(dst))
+            with open(dst, mode) as fout:
 
-        shutil.copyfileobj(fdin, fdout)
+                while 1:
+                    din = fin.read(1024 * 1024)
+                    if not din:
+                        break
+                    fout.write(din)
+
         print("Done")

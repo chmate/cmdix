@@ -88,7 +88,7 @@ def input_range(args, outfd):
 
 def echo(args, outfd):
     if args.inputrange:
-        exception.StdErrException(
+        raise exception.StdErrException(
             "{0}: cannot combine -e and -i options".format(args.prog)
         )
     lines = args.file

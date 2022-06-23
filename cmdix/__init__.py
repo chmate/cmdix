@@ -113,6 +113,8 @@ def run(argv=None):
     """
     argv = argv or sys.argv
     commandname = os.path.basename(argv[0])
+    if platform.system() == 'Windows':
+        commandname = commandname.lower()
     argv = argv[1:]
     parser = get_parser(commandname)
 
@@ -158,10 +160,12 @@ def run_subcommand(commandname, argv):
     try:
         cmd = getcommand(commandname)
     except CommandNotFoundException:
-        print("Command `{0}` not found.".format(commandname), file=sys.stderr)
+        print("{0}: Command `{1}` not found.".format(__name__, commandname), file=sys.stderr)
         return
-    p = cmd(argparse.ArgumentParser(prog=commandname))
+    conflict_handler = getattr(cmd, "conflict_handler", "error")
+    p = cmd(argparse.ArgumentParser(prog=commandname, conflict_handler=conflict_handler))
     args = p.parse_args(argv)
+    args.prog = p.prog
     args.func(args)
 
 

@@ -17,6 +17,12 @@ def compressor(p, comptype='gzip', decompress=False):
     p.set_defaults(func=compressorfunc, comptype=comptype, decompress=decompress)
     p.add_argument('FILE', nargs='*')
     p.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Force compression or decompression even if the file already exists",
+    )
+    p.add_argument(
         "-c",
         "--stdout",
         "--as-stdout",
@@ -114,49 +120,55 @@ def compressorfunc(args):
     infiles = args.FILE
 
     # Use stdin for input if no file is specified or file is '-'
-    if len(args.FILE) == 0 or args.FILE == ['-']:
-        infiles = [sys.stdin]
+    if not len(args.FILE):
+        infiles = ['-']
 
     for infile in infiles:
-        if args.decompress:
-            infile, outfile = decompress(args, compresstype, infile, suffix)
-        else:
-            infile, outfile = compress(args, compresstype, infile, outfile, suffix)
+        f = decompress if args.decompress else compress
+        fpin, fpout = f(args, compresstype, infile, suffix)
 
-        shutil.copyfileobj(infile, outfile)
+        shutil.copyfileobj(fpin, fpout)
 
 
-def compress(args, compresstype, infile, outfile, suffix):
+def compress(args, compresstype, infile, suffix):
     zippath = infile + suffix
-    infile = open(infile, 'rb')
-    if len(args.FILE) == 0 or args.stdout:
-        outfile = sys.stdout
-    else:
-        if os.path.exists(zippath):
-            q = input(
-                "{0}: {1} ".format(args.prog, zippath)
-                + "already exists; do you wish to overwrite (y or n)? "
-            )
-            if q.upper() != 'Y':
-                StdErrException("not overwritten", 2)
+    fileobj = None
+    mode = "wb" if args.force else "xb"
 
-        outfile = compresstype(zippath, 'wb', compresslevel=args.compresslevel)
-    return infile, outfile
+    if len(args.FILE) == 0 or args.stdout:
+        zippath = ""
+        fileobj = sys.stdout.buffer
+
+    if infile == '-':
+        fpin = sys.stdin.buffer
+    else:
+        fpin = open(infile, 'rb')
+
+    fpout = compresstype(
+        zippath, mode, compresslevel=args.compresslevel, fileobj=fileobj
+    )
+
+    return fpin, fpout
 
 
 def decompress(args, compresstype, infile, suffix):
-    infile = compresstype(infile, 'rb', compresslevel=args.compresslevel)
-    if len(args.FILE) == 0 or args.stdout:
-        outfile = sys.stdout
+    fileobj = None
+
+    if infile == '-':
+        fileobj = sys.stdin.buffer
+        infile = None
+
+    mode = "wb" if args.force else "xb"
+
+    fpin = compresstype(
+        infile, mode='rb', compresslevel=args.compresslevel, fileobj=fileobj
+    )
+
+    if len(args.FILE) == 0 or args.stdout or fileobj is not None:
+        fpout = sys.stdout.buffer
     else:
         unzippath = infile.rstrip(suffix)
-        if os.path.exists(unzippath):
-            q = input(
-                "{0}: {1} ".format(args.prog, unzippath)
-                + "already exists; do you wish to overwrite (y or n)? "
-            )
-            if q.upper() != 'Y':
-                StdOutException("not overwritten", 2)
 
-        outfile = open(unzippath, 'wb')
-    return infile, outfile
+        fpout = open(unzippath, mode)
+
+    return fpin, fpout

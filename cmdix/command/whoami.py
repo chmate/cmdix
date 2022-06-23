@@ -1,6 +1,6 @@
 import os
-
-from .. import onlyunix
+import platform
+import getpass
 
 try:
     import pwd
@@ -8,7 +8,6 @@ except ImportError:
     pass
 
 
-@onlyunix
 def parseargs(p):
     """
     Add arguments and `func` to `p`.
@@ -25,4 +24,7 @@ def parseargs(p):
 
 
 def func(args):
-    print(pwd.getpwuid(os.getuid())[0])
+    if platform.system() == 'Windows':
+        print(getpass.getuser())
+    else:
+        print(pwd.getpwuid(os.getuid())[0])
